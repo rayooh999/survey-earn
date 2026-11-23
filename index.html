@@ -1,0 +1,210 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Survey Earn</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial;background:#f1f5f9;color:#172033}
+header{background:#123c75;color:white;text-align:center;padding:25px}
+header h1{margin:0;font-size:28px}
+main{max-width:600px;margin:auto;padding:15px}
+.card{background:white;padding:20px;border-radius:13px;margin:15px 0;box-shadow:0 3px 12px #0001}
+input,select{width:100%;padding:13px;margin:8px 0;border:1px solid #ccc;border-radius:8px}
+button{background:#1769aa;color:white;border:0;padding:13px;border-radius:8px;width:100%;margin-top:8px;font-weight:bold}
+button:disabled{opacity:.5}
+.green{color:#13834b}
+.hidden{display:none}
+.survey{border-left:4px solid #1769aa}
+nav{display:flex;gap:8px;flex-wrap:wrap}
+nav button{flex:1}
+.notice{background:#fff5d9;padding:12px;border-radius:8px;font-size:13px}
+</style>
+</head>
+<body>
+
+<header>
+<h1>SURVEY EARN</h1>
+<p>Complete surveys. Earn rewards.</p>
+</header>
+
+<main>
+
+<div class="notice">
+<strong>DEMO WEBSITE:</strong> No real money is collected or paid.
+Survey rewards and withdrawals are simulated.
+</div>
+
+<section id="register" class="card">
+<h2>Create your account</h2>
+<p>Registration fee: KSh 0 during testing</p>
+
+<form id="registerForm">
+<input id="name" placeholder="Full name" required>
+<input id="email" type="email" placeholder="Email address" required>
+<input id="phone" placeholder="M-Pesa number (test only)" required>
+<button type="submit">Create account</button>
+</form>
+</section>
+
+<section id="dashboard" class="hidden">
+
+<nav>
+<button onclick="showPage('home')">Home</button>
+<button onclick="showPage('surveys')">Surveys</button>
+<button onclick="showPage('wallet')">Wallet</button>
+<button onclick="logout()">Logout</button>
+</nav>
+
+<div id="home" class="card">
+<h2>Welcome, <span id="username"></span></h2>
+<p>Your Survey Earn dashboard.</p>
+<h3>Your balance</h3>
+<h2 class="green" id="balance">KSh 0</h2>
+<p id="dollarBalance">$0.00</p>
+</div>
+
+<div id="surveys" class="hidden">
+<h2>Available surveys</h2>
+
+<div class="card survey">
+<h3>General lifestyle</h3>
+<p>Estimated time: 2 minutes</p>
+<strong class="green">KSh 5</strong>
+<button onclick="earn(5,this)">Try demo survey</button>
+</div>
+
+<div class="card survey">
+<h3>Technology preferences</h3>
+<p>Estimated time: 5 minutes</p>
+<strong class="green">KSh 10</strong>
+<button onclick="earn(10,this)">Try demo survey</button>
+</div>
+
+<div class="card survey">
+<h3>Shopping habits</h3>
+<p>Estimated time: 8 minutes</p>
+<strong class="green">KSh 20</strong>
+<button onclick="earn(20,this)">Try demo survey</button>
+</div>
+
+<div class="card survey">
+<h3>Special survey</h3>
+<p>Estimated time: 10 minutes</p>
+<strong class="green">KSh 50</strong>
+<button onclick="earn(50,this)">Try demo survey</button>
+</div>
+</div>
+
+<div id="wallet" class="hidden card">
+<h2>My Wallet</h2>
+<h2 class="green" id="walletBalance">KSh 0</h2>
+<p id="walletUSD">$0.00</p>
+
+<h3>Withdrawal request (demo)</h3>
+<input id="withdrawAmount" type="number" min="1"
+placeholder="Amount in KSh">
+<input id="withdrawPhone"
+placeholder="Test M-Pesa number">
+<button onclick="withdraw()">Submit demo request</button>
+<p id="withdrawMessage"></p>
+<h3>Transaction history</h3>
+<ul id="history"></ul>
+</div>
+
+</section>
+
+</main>
+
+<script>
+let user = null;
+let balance = 0;
+let history = [];
+
+function showPage(page) {
+  ["home","surveys","wallet"].forEach(id => {
+    document.getElementById(id).classList.toggle(
+      "hidden", id !== page
+    );
+  });
+  updateWallet();
+}
+
+document.getElementById("registerForm")
+.addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  user = {
+    name: document.getElementById("name").value,
+    email: document.getElementById("email").value
+  };
+
+  document.getElementById("username").textContent = user.name;
+  document.getElementById("register").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
+
+  showPage("home");
+});
+
+function earn(amount,button) {
+  balance += amount;
+  history.push("Demo survey reward: KSh " + amount);
+  button.disabled = true;
+  button.textContent = "Completed (demo)";
+  updateWallet();
+  alert("Demo reward: KSh " + amount);
+}
+
+function updateWallet() {
+  document.getElementById("balance").textContent =
+    "KSh " + balance;
+  document.getElementById("walletBalance").textContent =
+    "KSh " + balance;
+
+  // Illustrative fixed conversion for demo display only.
+  let usd = (balance / 130).toFixed(2);
+
+  document.getElementById("dollarBalance").textContent =
+    "$" + usd;
+  document.getElementById("walletUSD").textContent =
+    "$" + usd;
+
+  document.getElementById("history").innerHTML =
+    history.map(item => "<li>" + item + "</li>").join("");
+}
+
+function withdraw() {
+  let amount = Number(
+    document.getElementById("withdrawAmount").value
+  );
+
+  let phone = document.getElementById("withdrawPhone").value;
+
+  if (!amount || amount <= 0 || amount > balance || !phone) {
+    alert("Enter a valid amount and test phone number.");
+    return;
+  }
+
+  balance -= amount;
+  history.push("Demo withdrawal request: KSh " + amount);
+
+  document.getElementById("withdrawMessage").textContent =
+    "Demo request submitted. No real payment was sent.";
+
+  updateWallet();
+}
+
+function logout() {
+  user = null;
+  balance = 0;
+  history = [];
+  document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("register").classList.remove("hidden");
+  document.getElementById("registerForm").reset();
+}
+</script>
+
+</body>
+</html>
