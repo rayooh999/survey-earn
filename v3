@@ -1,0 +1,404 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SURVEY EARN V3</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+body{background:#080d0b;color:white}
+header{background:#101b15;padding:20px;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:23px;font-weight:bold;color:#00e676}
+.container{max-width:850px;margin:auto;padding:20px}
+.card{background:#142019;padding:20px;border-radius:12px;margin:15px 0;border:1px solid #294432}
+h2{color:#00e676;margin-bottom:18px}
+h3{margin-bottom:10px}
+input:not([type=radio]),select{width:100%;padding:13px;margin:9px 0;background:#09120c;color:white;border:1px solid #35513e;border-radius:7px}
+button{background:#00e676;color:#07120a;border:0;padding:13px;border-radius:7px;font-weight:bold;cursor:pointer;margin-top:10px}
+button:hover{background:#00c853}
+.full{width:100%}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin:15px 0}
+.nav button{flex:1;min-width:85px}
+.balance{font-size:32px;color:#00e676;font-weight:bold;margin:10px 0}
+.small{color:#a8b8ad;font-size:13px}
+.survey{background:#101a14;border:1px solid #35513e;padding:16px;border-radius:9px;margin:12px 0}
+.question{padding:15px 0;border-bottom:1px solid #294432}
+.option{display:block;padding:9px;margin:7px 0;background:#1a2b20;border-radius:7px}
+.option input{margin-right:9px}
+.hidden{display:none!important}
+footer{text-align:center;padding:25px;color:#829487}
+.status{color:#00e676;margin-top:10px}
+@media(max-width:500px){.container{padding:12px}header{padding:16px}.logo{font-size:20px}}
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="logo">SURVEY EARN</div>
+<div>V3.0</div>
+</header>
+
+<div class="container">
+
+<!-- REGISTER -->
+<div class="card" id="register">
+<h2>Create Account</h2>
+<input id="regName" placeholder="Full name">
+<input id="regEmail" type="email" placeholder="Email address">
+<input id="regPassword" type="password" placeholder="Password (minimum 8 characters)">
+<button class="full" onclick="register()">Create Account</button>
+<p class="small" style="margin-top:15px">Already have an account?</p>
+<button class="full" onclick="showLogin()">Login</button>
+</div>
+
+<!-- LOGIN -->
+<div class="card hidden" id="login">
+<h2>Login</h2>
+<input id="loginEmail" type="email" placeholder="Email address">
+<input id="loginPassword" type="password" placeholder="Password">
+<button class="full" onclick="login()">Login</button>
+<button class="full" onclick="showRegister()">Create account</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+
+<h2>Dashboard</h2>
+
+<div class="card">
+<p>Welcome, <strong id="username"></strong></p>
+<p class="small">Demo wallet balance</p>
+<div class="balance">KSh <span id="balance">0</span></div>
+</div>
+
+<div class="nav">
+<button onclick="section('surveys')">Surveys</button>
+<button onclick="section('wallet')">Wallet</button>
+<button onclick="section('profile')">Profile</button>
+<button onclick="logout()">Logout</button>
+</div>
+
+<!-- SURVEYS -->
+<div id="surveys" class="card">
+<h2>Available Surveys</h2>
+<p class="small">Answer every question before submitting.</p>
+
+<div id="surveyList"></div>
+<div id="questionArea"></div>
+</div>
+
+<!-- WALLET -->
+<div id="wallet" class="card hidden">
+<h2>My Wallet</h2>
+<p class="small">Demo earnings</p>
+<div class="balance">KSh <span id="walletBalance">0</span></div>
+
+<h3>Withdrawal Request</h3>
+<input id="mpesa" placeholder="M-Pesa number (2547XXXXXXXX)">
+<button class="full" onclick="withdraw()">Submit Request</button>
+<p id="withdrawMessage" class="status"></p>
+<p class="small">Demo only. No real payment or withdrawal is processed.</p>
+</div>
+
+<!-- PROFILE -->
+<div id="profile" class="card hidden">
+<h2>My Profile</h2>
+<p>Name: <span id="profileName"></span></p>
+<p>Email: <span id="profileEmail"></span></p>
+<h3 style="margin-top:20px">Completed surveys</h3>
+<p id="completedCount"></p>
+</div>
+
+</div>
+</div>
+
+<footer>© 2026 SURVEY EARN | V3.0</footer>
+
+<script>
+
+// DEMO STORAGE
+function getUsers(){
+return JSON.parse(localStorage.getItem("surveyUsers")||"{}");
+}
+
+function saveUsers(users){
+localStorage.setItem("surveyUsers",JSON.stringify(users));
+}
+
+let currentUser=null;
+
+// SURVEY QUESTIONS
+const surveys={
+
+technology:{
+title:"Technology Survey",
+reward:20,
+questions:[
+["Which device do you use most?",["Smartphone","Laptop","Tablet","Desktop"]],
+["How often do you use the internet?",["Daily","Weekly","Rarely","Never"]],
+["Which operating system do you prefer?",["Android","iOS","Windows","Other"]],
+["What do you mainly use technology for?",["Education","Work","Entertainment","Communication"]],
+["Would you recommend digital learning?",["Yes","No","Maybe"]]
+]
+},
+
+education:{
+title:"Education Survey",
+reward:30,
+questions:[
+["What is your education level?",["Primary","Secondary","College","University"]],
+["Which learning method do you prefer?",["Online","Classroom","Books","Practical"]],
+["How often do you study?",["Daily","Weekly","Sometimes","Rarely"]],
+["What makes learning difficult?",["Time","Resources","Internet","Other"]],
+["Do you enjoy online learning?",["Yes","No","Sometimes"]]
+]
+},
+
+customer:{
+title:"Customer Experience Survey",
+reward:25,
+questions:[
+["How often do you shop online?",["Daily","Weekly","Monthly","Never"]],
+["What matters most when shopping?",["Price","Quality","Delivery","Service"]],
+["Do you read customer reviews?",["Always","Sometimes","Never"]],
+["How do you prefer customer support?",["Phone","Email","Live chat","In person"]],
+["Would you recommend a good online store?",["Yes","No","Maybe"]]
+]
+}
+
+};
+
+// REGISTRATION
+function register(){
+
+let name=document.getElementById("regName").value.trim();
+let email=document.getElementById("regEmail").value.trim().toLowerCase();
+let password=document.getElementById("regPassword").value;
+
+if(!name||!email||password.length<8){
+alert("Enter all details. Password must have at least 8 characters.");
+return;
+}
+
+let users=getUsers();
+
+if(users[email]){
+alert("Account already exists.");
+return;
+}
+
+users[email]={
+name,email,password,balance:0,completed:[]
+};
+
+saveUsers(users);
+alert("Account created successfully!");
+showLogin();
+}
+
+// LOGIN
+function login(){
+
+let email=document.getElementById("loginEmail").value.trim().toLowerCase();
+let password=document.getElementById("loginPassword").value;
+let users=getUsers();
+
+if(!users[email]||users[email].password!==password){
+alert("Incorrect login details.");
+return;
+}
+
+currentUser=email;
+openDashboard();
+}
+
+function showLogin(){
+document.getElementById("register").classList.add("hidden");
+document.getElementById("login").classList.remove("hidden");
+}
+
+function showRegister(){
+document.getElementById("login").classList.add("hidden");
+document.getElementById("register").classList.remove("hidden");
+}
+
+// DASHBOARD
+function openDashboard(){
+
+document.getElementById("register").classList.add("hidden");
+document.getElementById("login").classList.add("hidden");
+document.getElementById("dashboard").classList.remove("hidden");
+
+let user=getUsers()[currentUser];
+
+document.getElementById("username").textContent=user.name;
+document.getElementById("profileName").textContent=user.name;
+document.getElementById("profileEmail").textContent=user.email;
+
+updateBalance();
+renderSurveys();
+section("surveys");
+}
+
+function updateBalance(){
+let user=getUsers()[currentUser];
+document.getElementById("balance").textContent=user.balance;
+document.getElementById("walletBalance").textContent=user.balance;
+document.getElementById("completedCount").textContent=user.completed.length;
+}
+
+// NAVIGATION
+function section(id){
+["surveys","wallet","profile"].forEach(s=>{
+document.getElementById(s).classList.add("hidden");
+});
+document.getElementById(id).classList.remove("hidden");
+}
+
+// SURVEY LIST
+function renderSurveys(){
+
+let user=getUsers()[currentUser];
+let html="";
+
+for(let id in surveys){
+
+let survey=surveys[id];
+let done=user.completed.includes(id);
+
+html+=`
+<div class="survey">
+<h3>${survey.title}</h3>
+<p>${survey.questions.length} Questions</p>
+<p>Reward: KSh ${survey.reward}</p>
+<p class="small">${done?"Completed":"Available"}</p>
+<button class="full" ${done?"disabled":""}
+onclick="startSurvey('${id}')">
+${done?"Completed":"Start Survey"}
+</button>
+</div>`;
+}
+
+document.getElementById("surveyList").innerHTML=html;
+}
+
+// START SURVEY
+function startSurvey(id){
+
+let user=getUsers()[currentUser];
+
+if(user.completed.includes(id)){
+alert("You already completed this survey.");
+return;
+}
+
+let survey=surveys[id];
+let html=`<h2>${survey.title}</h2>`;
+
+survey.questions.forEach((q,i)=>{
+
+html+=`
+<div class="question">
+<p><strong>${i+1}. ${q[0]}</strong></p>`;
+
+q[1].forEach(option=>{
+html+=`
+<label class="option">
+<input type="radio" name="answer${i}" value="${option}">
+${option}
+</label>`;
+});
+
+html+=`</div>`;
+});
+
+html+=`
+<button class="full" onclick="submitSurvey('${id}')">
+Submit Answers
+</button>
+<button class="full" onclick="closeSurvey()">
+Cancel
+</button>`;
+
+document.getElementById("questionArea").innerHTML=html;
+document.getElementById("questionArea").scrollIntoView({behavior:"smooth"});
+}
+
+// CANCEL SURVEY
+function closeSurvey(){
+document.getElementById("questionArea").innerHTML="";
+}
+
+// SUBMIT SURVEY
+function submitSurvey(id){
+
+let survey=surveys[id];
+let answers=[];
+
+for(let i=0;i<survey.questions.length;i++){
+
+let selected=document.querySelector(
+`input[name="answer${i}"]:checked`
+);
+
+if(!selected){
+alert("Please answer question "+(i+1));
+return;
+}
+
+answers.push(selected.value);
+}
+
+let users=getUsers();
+let user=users[currentUser];
+
+if(user.completed.includes(id)){
+alert("Survey already completed.");
+return;
+}
+
+user.completed.push(id);
+user.balance+=survey.reward;
+
+saveUsers(users);
+updateBalance();
+renderSurveys();
+
+document.getElementById("questionArea").innerHTML=`
+<div class="card">
+<h2>Survey Submitted!</h2>
+<p>Thank you for your answers.</p>
+<p class="status">Demo reward: KSh ${survey.reward}</p>
+</div>`;
+
+}
+
+// WITHDRAWAL DEMO
+function withdraw(){
+
+let phone=document.getElementById("mpesa").value.trim();
+
+if(!/^254[17]\d{8}$/.test(phone)){
+alert("Enter a valid Kenyan M-Pesa number.");
+return;
+}
+
+document.getElementById("withdrawMessage").textContent=
+"Demo request received. No money has been sent.";
+}
+
+// LOGOUT
+function logout(){
+currentUser=null;
+document.getElementById("dashboard").classList.add("hidden");
+showRegister();
+}
+
+</script>
+
+</body>
+  </html>
+  
